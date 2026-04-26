@@ -6,7 +6,7 @@
 constexpr int WATER_SENSOR_PIN{2};
 constexpr float SPEED_OF_SENSING{200.0f};
 constexpr int MAX_CONTAINER_SIZE{5};
-constexpr int MAX_TIMEOUT_LONG{10};
+constexpr int MAX_TIMEOUT_LONG{5};
 constexpr int MAX_WATER_LEVEL{20};
 
 #define ONE_VALUE_CALC SPEED_OF_SENSING / 1000
@@ -36,7 +36,7 @@ public:
     char avegBuffer[256];
     dtostrf(this->getAverageOfItemsInStorage(), 6, 2, avegBuffer);
 
-    sprintf(buffer, "{\"averageFlow\":\"%s\", \"waterIsCut\":%d}", avegBuffer, this->shouldCutWaterOutput());
+    sprintf(buffer, "{\"averageFlow\":\"%s\", \"waterIsCut\":%d, \"waterLimit\": %d}", avegBuffer, this->shouldCutWaterOutput(), MAX_WATER_LEVEL);
     Serial.println(buffer);
   }
 
