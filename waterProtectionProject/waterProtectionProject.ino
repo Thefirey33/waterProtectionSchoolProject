@@ -17,6 +17,15 @@ int averageValues[MAX_CONTAINER_SIZE];
 Vector<int> averageStorage(averageValues);
 
 /**
+  This reads the current serial input.
+*/
+String getInputString() {
+  String str = Serial.readStringUntil('\n');
+  str.trim();
+  return str;
+}
+
+/**
   This houses all of the information related to water related functions.
 */
 class WaterSensorPropertiesManager {
@@ -25,6 +34,7 @@ public:
   double waterCuttingCounter{0};
   float flowSpeed{0};
   unsigned long oldTime{0};
+  bool m_override{false};
 
   /**
     This is where the information about the current state of the water levels
@@ -36,7 +46,7 @@ public:
     char avegBuffer[256];
     dtostrf(this->getAverageOfItemsInStorage(), 6, 2, avegBuffer);
 
-    sprintf(buffer, "{\"averageFlow\":\"%s\", \"waterIsCut\":%d, \"waterLimit\": %d}", avegBuffer, this->shouldCutWaterOutput(), MAX_WATER_LEVEL);
+    sprintf(buffer, "{\"averageFlow\":\"%s\", \"waterIsCut\":%d, \"waterLimit\": %d, \"override\": %d}", avegBuffer, this->shouldCutWaterOutput(), MAX_WATER_LEVEL, this->m_override);
     Serial.println(buffer);
   }
 
@@ -65,7 +75,7 @@ public:
           max(0, this->waterCuttingCounter - ONE_VALUE_CALC);
     }
 
-    return this->waterCuttingCounter >= MAX_TIMEOUT_LONG;
+    return this->waterCuttingCounter >= MAX_TIMEOUT_LONG && !this->m_override;
   }
 
   /**
@@ -108,9 +118,7 @@ void setup() {
   while(Serial.available() == 0);
   
   while (!establishedConnection) {
-    String connectionStr = Serial.readString();
-    connectionStr.trim();
-    if (connectionStr = "connectdev")
+    if (getInputString() == "connectdev")
     {
       establishedConnection = true;
       Serial.println("connectok");
@@ -131,6 +139,13 @@ void loop() {
     averageStorage.remove(0);
 
   averageStorage.push_back(waterSensorPropertiesManager->flowSpeed);
+
+  if (Serial.available())
+  {
+    if (getInputString() == "boardchange") {
+      waterSensorPropertiesManager->m_override = !waterSensorPropertiesManager->m_override;
+    }
+  }
 
   waterSensorPropertiesManager->resetTimings();
   waterSensorPropertiesManager->printSerialInfo();
